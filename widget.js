@@ -1,43 +1,54 @@
-class CustomInputWidget extends HTMLElement {
-    constructor() {
-        super();
-        this.attachShadow({ mode: "open" });
+sap.ui.define([
+    "sap/ui/core/Control",
+    "sap/suite/ui/commons/ProcessFlow"
+], function(Control, ProcessFlow) {
+    "use strict";
 
-        // Input Field
-        this.inputElement = document.createElement("input");
-        this.inputElement.type = "text";
-        this.inputElement.placeholder = this.getAttribute("placeholder") || "Veri giriniz...";
+    return Control.extend("custom.processflow.scrollable", {
+        metadata: {
+            properties: {
+                "lanes": { type: "array", defaultValue: [] },
+                "nodes": { type: "array", defaultValue: [] },
+                "theme": { type: "string", defaultValue: "light" }
+            },
+            events: {
+                "nodeClick": {
+                    parameters: {
+                        "nodeId": { type: "string" }
+                    }
+                }
+            }
+        },
 
-        // Submit Button
-        this.buttonElement = document.createElement("button");
-        this.buttonElement.textContent = this.getAttribute("buttonText") || "Gönder";
+        init: function() {
+            // Initialization code, if needed
+        },
 
-        // Event Listener for Submit Button
-        this.buttonElement.addEventListener("click", () => {
-            const event = new CustomEvent("submitEvent", {
-                detail: { value: this.inputElement.value }
+        renderer: function(oRM, oControl) {
+            // Render the Process Flow control into the DOM
+            oRM.write("<div");
+            oRM.writeControlData(oControl);
+            oRM.write(">");
+            var oProcessFlow = new ProcessFlow({
+                lanes: oControl.getLanes(),
+                nodes: oControl.getNodes(),
+                theme: oControl.getTheme(),
+                width: "100%",
+                height: "400px"
             });
-            this.dispatchEvent(event);
-        });
 
-        // Append Elements
-        this.shadowRoot.appendChild(this.inputElement);
-        this.shadowRoot.appendChild(this.buttonElement);
-    }
+            // Place the ProcessFlow control inside the custom widget
+            oProcessFlow.placeAt(oControl.getId() + "-content");
 
-    static get observedAttributes() {
-        return ["placeholder", "buttonText"];
-    }
+            oRM.write("</div>");
+        },
 
-    attributeChangedCallback(name, oldValue, newValue) {
-        if (name === "placeholder") {
-            this.inputElement.placeholder = newValue;
+        // Example of handling the node click event
+        _handleNodeClick: function(oEvent) {
+            var oNode = oEvent.getParameter("node");
+            this.fireNodeClick({
+                nodeId: oNode.getId()
+            });
         }
-        if (name === "buttonText") {
-            this.buttonElement.textContent = newValue;
-        }
-    }
-}
-
-// Web Component'i Tanımla
-customElements.define("custom-input-widget", CustomInputWidget);
+    });
+});
